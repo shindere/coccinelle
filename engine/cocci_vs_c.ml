@@ -1,27 +1,3 @@
-(*
- * Copyright 2010, INRIA, University of Copenhagen
- * Julia Lawall, Rene Rydhof Hansen, Gilles Muller, Nicolas Palix
- * Copyright 2005-2009, Ecole des Mines de Nantes, University of Copenhagen
- * Yoann Padioleau, Julia Lawall, Rene Rydhof Hansen, Henrik Stuart, Gilles Muller, Nicolas Palix
- * This file is part of Coccinelle.
- *
- * Coccinelle is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, according to version 2 of the License.
- *
- * Coccinelle is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with Coccinelle.  If not, see <http://www.gnu.org/licenses/>.
- *
- * The authors reserve the right to distribute this or future versions of
- * Coccinelle under other licenses.
- *)
-
-
 open Common
 
 module A = Ast_cocci
@@ -798,7 +774,16 @@ let list_matcher match_dots rebuild_dots match_comma rebuild_comma
 
           (* '...' can take more or less the beginnings of the arguments *)
               let startendxs =
-		Common.zip (Common.inits ys) (Common.tails ys) in
+		(* if eas is empty there is only one possible match.
+		   the same if eas is just a comma *)
+		match eas with
+		  [] -> [(ys,[])]
+		| [c] when
+		   (match match_comma c with Some _ -> true | None -> false) ->
+		    let r = List.rev ys in
+		    [(List.rev(List.tl r),[List.hd r])]
+		| _ ->
+		  Common.zip (Common.inits ys) (Common.tails ys) in
 	      Some
 		(startendxs +> List.fold_left (fun acc (startxs, endxs) ->
 		  acc >||> (

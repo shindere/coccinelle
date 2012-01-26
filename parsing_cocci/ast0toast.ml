@@ -1,27 +1,3 @@
-(*
- * Copyright 2010, INRIA, University of Copenhagen
- * Julia Lawall, Rene Rydhof Hansen, Gilles Muller, Nicolas Palix
- * Copyright 2005-2009, Ecole des Mines de Nantes, University of Copenhagen
- * Yoann Padioleau, Julia Lawall, Rene Rydhof Hansen, Henrik Stuart, Gilles Muller, Nicolas Palix
- * This file is part of Coccinelle.
- *
- * Coccinelle is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, according to version 2 of the License.
- *
- * Coccinelle is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with Coccinelle.  If not, see <http://www.gnu.org/licenses/>.
- *
- * The authors reserve the right to distribute this or future versions of
- * Coccinelle under other licenses.
- *)
-
-
 (* Arities matter for the minus slice, but not for the plus slice. *)
 
 (* + only allowed on code in a nest (in_nest = true).  ? only allowed on
@@ -337,11 +313,14 @@ let dots fn d =
 
 (* commas in dotted lists, here due to polymorphism restrictions *)
 
-let add_comma is_comma make_comma itemlist =
+let add_comma is_comma is_dots make_comma itemlist =
   match Ast0.unwrap itemlist with
     Ast0.DOTS(x) ->
       (match List.rev x with
 	[] -> itemlist
+(* Not sure if comma is needed if the list is just ...; leave it there for
+now. See list_matcher in cocci_vs_c.ml in first try_matches case. *)
+(*      |	[e] when is_dots e -> itemlist*)
       | e::es ->
 	  if is_comma e
 	  then itemlist
@@ -358,11 +337,13 @@ let add_comma is_comma make_comma itemlist =
 let add_exp_comma =
   add_comma
     (function x -> match Ast0.unwrap x with Ast0.EComma _ -> true | _ -> false)
+    (function x -> match Ast0.unwrap x with Ast0.Edots _  -> true | _ -> false)
     (function x -> Ast0.EComma x)
 
 and add_init_comma =
   add_comma
     (function x -> match Ast0.unwrap x with Ast0.IComma _ -> true | _ -> false)
+    (function x -> match Ast0.unwrap x with Ast0.Idots _  -> true | _ -> false)
     (function x -> Ast0.IComma x)
 
 (* --------------------------------------------------------------------- *)
