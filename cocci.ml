@@ -126,8 +126,8 @@ let ctls_of_ast2 ast (ua,fua,fuas) pos =
 	(Asttomember.asttomember ast ua))
     ast (List.combine ua (List.combine fua (List.combine fuas pos)))
 
-let ctls_of_ast ast ua =
-  Common.profile_code "asttoctl2" (fun () -> ctls_of_ast2 ast ua)
+let ctls_of_ast ast ua pl =
+  Common.profile_code "asttoctl2" (fun () -> ctls_of_ast2 ast ua pl)
 
 (*****************************************************************************)
 (* Some  debugging functions *)
@@ -1633,7 +1633,8 @@ and process_a_ctl_a_env_a_toplevel2 r e c f =
       (***************************************)
 	     let model_ctl =
 	       CCI.model_for_ctl r.dropped_isos (Common.some c.flow) e
-	     in CCI.mysat model_ctl ctl (r.rule_info.used_after, e))
+	     in CCI.mysat model_ctl ctl
+	       (r.rule_info.rulename, r.rule_info.used_after, e))
        in
        if not returned_any_states
        then None
@@ -1700,6 +1701,7 @@ let rec bigloop2 rs (ccs: file_info list) =
 	      (Ast_cocci.ScriptRule (nm,l,deps,mv,script_vars,code)));
 	end;
 
+      (*pr2 (List.hd(cmd_to_list "free -m | grep Mem"));*)
 	if !Flag.show_misc then print_endline "RESULT =";
 
         let (_, newes) =
@@ -1811,8 +1813,8 @@ let pre_engine2 (coccifile, isofile) =
   (* useful opti when use -dir *)
   let (metavars,astcocci,
        free_var_lists,negated_pos_lists,used_after_lists,
-       positions_lists,(toks,_,_)) =
-      sp_of_file coccifile isofile in
+       positions_lists,(toks,_,_)) = sp_of_file coccifile isofile in
+
   let ctls = ctls_of_ast astcocci used_after_lists positions_lists in
 
   g_contain_typedmetavar := sp_contain_typed_metavar astcocci;

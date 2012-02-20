@@ -103,7 +103,6 @@ type reason =
   | Braces of Ast0.statement
   | Nest of Ast0.statement
   | Position of Ast.meta_name
-  | Multiposition
   | TypeMatch of reason list
 
 let rec interpret_reason name line reason printer =
@@ -145,9 +144,7 @@ let rec interpret_reason name line reason printer =
   | Position(rule,name) ->
       Printf.printf "position variable %s.%s conflicts with an isomorphism\n"
 	rule name
-  | Multiposition _ ->
-      Printf.printf "multiple position variables conflict with an isomorphism\n"
-  | TypeMatch reason_list ->
+   | TypeMatch reason_list ->
       List.iter (function r -> interpret_reason name line r printer)
 	reason_list
   | _ -> failwith "not possible"
@@ -301,16 +298,16 @@ let match_maker checks_needed context_required whencode_allowed =
     if checks_needed
     then
       match Ast0.get_pos cmc with
-	[(Ast0.MetaPos (name,_,_)) as x] ->
-	  (match Ast0.get_pos pmc with
-	    [Ast0.MetaPos (name1,_,_)] ->
-	      add_binding name1 (Ast0.MetaPosTag x) binding
-	  | [] ->
-	      let (rule,name) = Ast0.unwrap_mcode name in
-	      Fail (Position(rule,name))
-	  | _ -> Fail Multiposition)
-      | [] -> OK binding
-      | _ -> Fail Multiposition
+	[] -> OK binding (* no hidden vars in smpl code, so nothing to do *)
+      |	((a::_) as hidden_code) ->
+	  let hidden_pattern =
+	    List.filter (function Ast0.HiddenVarTag _ -> true | _ -> false)
+	      (Ast0.get_pos pmc) in
+	  (match hidden_pattern with
+	    [Ast0.HiddenVarTag([Ast0.MetaPosTag(Ast0.MetaPos (name1,_,_))])] ->
+	      add_binding name1 (Ast0.HiddenVarTag(hidden_code)) binding
+	  | [] -> Fail(Position(Ast0.unwrap_mcode(Ast0.meta_pos_name a)))
+	  | _ -> failwith "badly compiled iso - multiple hidden variable")
     else OK binding in
 
   let match_dots matcher is_list_matcher do_list_match d1 d2 =
@@ -635,6 +632,14 @@ let match_maker checks_needed context_required whencode_allowed =
 		   [check_mcode opa opb; match_expr lefta leftb;
 		     match_expr righta rightb]
 	       else return false
+	  | (Ast0.Sequence(lefta,opa,righta),
+	     Ast0.Sequence(leftb,opb,rightb)) ->
+	       if mcode_equal opa opb
+	       then
+		 conjunct_many_bindings
+		   [check_mcode opa opb; match_expr lefta leftb;
+		     match_expr righta rightb]
+	       else return false
 	  | (Ast0.CondExpr(exp1a,lp1,exp2a,rp1,exp3a),
 	     Ast0.CondExpr(exp1b,lp,exp2b,rp,exp3b)) ->
 	       conjunct_many_bindings
@@ -720,7 +725,8 @@ let match_maker checks_needed context_required whencode_allowed =
 	  | (Ast0.Estars(_,Some _),_) ->
 	      failwith "whencode not allowed in a pattern1"
 	  | (Ast0.OptExp(expa),Ast0.OptExp(expb))
-	  | (Ast0.UniqueExp(expa),Ast0.UniqueExp(expb)) -> match_expr expa expb
+	  | (Ast0.UniqueExp(expa),Ast0.UniqueExp(expb)) ->
+	      match_expr expa expb
 	  | (_,Ast0.OptExp(expb))
 	  | (_,Ast0.UniqueExp(expb)) -> match_expr pattern expb
 	  | _ -> return false
@@ -1513,19 +1519,24 @@ let lookup name bindings mv_bindings =
    isomorphism *)
 let instantiate bindings mv_bindings =
   let mcode x =
-    let pos_names =
-      List.map (function Ast0.MetaPos(name,_,_) -> name) (Ast0.get_pos x) in
+    let (hidden,others) =
+      List.partition
+	(function Ast0.HiddenVarTag _ -> true | _ -> false)
+	(Ast0.get_pos x) in
     let new_names =
-      List.fold_left
-	(function prev ->
-	  function name ->
-	    try
-	      match lookup name bindings mv_bindings with
-		Common.Left(Ast0.MetaPosTag(id)) -> id::prev
-	      | _ -> failwith "not possible"
-	    with Not_found -> prev)
-	[] pos_names in
-    Ast0.set_pos new_names x in
+      match hidden with
+	[Ast0.HiddenVarTag([Ast0.MetaPosTag(Ast0.MetaPos (name,_,_))])] ->
+	  (try
+	  (* not at all sure that this is good enough *)
+	    match lookup name bindings mv_bindings with
+	      Common.Left(Ast0.HiddenVarTag(ids)) -> ids
+	    | _ -> failwith "not possible"
+	  with Not_found ->
+	     (*can't fail because checks_needed could be false?*)
+	    [])
+      |	[] -> [] (* no hidden metavars allowed *)
+      | _ -> failwith "badly compiled mcode" in
+    Ast0.set_pos (new_names@others) x in
   let donothing r k e = k e in
 
   (* cases where metavariables can occur *)
@@ -2574,6 +2585,7 @@ let rewrap_anything = function
   | Ast0.IsoWhenTag(_) | Ast0.IsoWhenTTag(_) | Ast0.IsoWhenFTag(_) ->
       failwith "only for isos within iso phase"
   | Ast0.MetaPosTag(p) -> Ast0.MetaPosTag(p)
+  | Ast0.HiddenVarTag(p) -> Ast0.HiddenVarTag(p) (* not sure it is possible *)
 
 (* --------------------------------------------------------------------- *)
 
