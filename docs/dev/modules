@@ -2,29 +2,10 @@ The coccinelle modules are linked in the following order:
 
 commons/commons.cma:
   ocamlextra/dumper.cmo
-  ocamlextra/setb.cmo
-  ocamlextra/mapb.cmo
-  ocamlextra/setPt.cmo
   commands.cmo
   common.cmo
-  interfaces.cmo
-  objet.cmo
-  ocollection.cmo
-  seti.cmo
-  oset.cmo
-  oassoc.cmo
-  osequence.cmo
-  ocollection/osetb.cmo
-  ocollection/oassocb.cmo
-  oarray.cmo
   ograph_simple.cmo
   ograph_extended.cmo
-  glimpse.cmo
-  parser_combinators.cmo
-  ocamlextra/enum.cmo
-  ocamlextra/dynArray.cmo
-  ocamlextra/suffix_tree.cmo
-  ocamlextra/suffix_tree_ext.cmo
 
 globals/globals.cma:
   config.cmo
