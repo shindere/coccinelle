@@ -75,7 +75,8 @@ export CPPFLAGS=@CPPFLAGS@
 MKDIR_P=@MKDIR_P@
 
 # the default Make target
-TARGET_ALL=@MAKETARGET_ALL@
+# Can be overriden e.g. in Makefile.local
+TARGET_ALL=all-release
 TARGET_SPATCH=@MAKETARGET_SPATCH@
 
 PYTHON_CFLAGS=@PYTHON_CFLAGS@
