@@ -167,7 +167,6 @@ python/coccipython.cma:
 
 ocaml/cocciocaml.cma:
   externalanalysis.cmo
-  exposed_modules.cmo
   coccilib.cmo
   ocamlcocci_aux.cmo
   yes_prepare_ocamlcocci.cmo # or no_prepare_ocamlcocci.cmo

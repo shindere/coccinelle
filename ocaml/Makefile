@@ -8,8 +8,7 @@ endif
 
 TARGET=cocciocaml
 
-SRC=externalanalysis.ml \
-	exposed_modules.ml coccilib.ml ocamlcocci_aux.ml $(OCAMLCOCCI_FILE) \
+SRC=externalanalysis.ml coccilib.ml ocamlcocci_aux.ml $(OCAMLCOCCI_FILE) \
 	prepare_ocamlcocci.ml run_ocamlcocci.ml
 
 #LIBS=../commons/commons.cma ../parsing_c/parsing_c.cma

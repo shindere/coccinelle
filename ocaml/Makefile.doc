@@ -16,12 +16,12 @@ man: $(DEST)/man/Coccilib.3o
 
 $(DEST)/man/Coccilib.3o: coccilib.cmi ../parsing_c/ast_c.cmi
 	$(MKDIR_P) $(DEST)/man
-	$(OCAMLDOC) $(FLAGS) -hide Exposed_modules \
+	$(OCAMLDOC) $(FLAGS) \
 		    -man $(MANFLAGS) -d $(DEST)/man ../parsing_c/ast_c.ml coccilib.ml
 
 $(DEST)/html/index.html: coccilib.cmi ../parsing_c/ast_c.cmi
 	$(MKDIR_P) $(DEST)/html
-	$(OCAMLDOC) $(FLAGS) -hide Exposed_modules \
+	$(OCAMLDOC) $(FLAGS) \
 		    -html $(HTMLFLAGS) -d $(DEST)/html ../parsing_c/ast_c.ml coccilib.ml
 
 cleandoc:
