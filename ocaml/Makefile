@@ -68,7 +68,7 @@ include Makefile.doc
 # Generic rules
 ##############################################################################
 
-.SUFFIXES: .ml .mli .cmo .cmi .cmx
+.SUFFIXES: .ml .mli .cmo .cmi .cmx .mldepend
 
 .ml.cmo:
 	$(OCAMLC_CMD) -c $<
